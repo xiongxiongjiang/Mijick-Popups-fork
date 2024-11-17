@@ -10,91 +10,125 @@
 
 
 import SwiftUI
+import Combine
 
 enum VM {}
-class ViewModel<Config: LocalConfig>: ViewModelObject {
+@MainActor protocol ViewModel: ObservableObject where Self.ObjectWillChangePublisher == ObservableObjectPublisher { init()
     // MARK: Attributes
-    private(set) var popups: [AnyPopup] = []
-    private(set) var updatePopupAction: ((AnyPopup) -> ())!
-    private(set) var closePopupAction: ((AnyPopup) -> ())!
+    var alignment: PopupAlignment { get set }
+    var popups: [AnyPopup] { get set }
+    var activePopupProperties: ActivePopupProperties { get set }
+    var screen: Screen { get set }
 
-    // MARK: Subclass Attributes
-    var activePopupHeight: CGFloat? = nil
-    var screen: Screen = .init()
-    var isKeyboardActive: Bool = false
+    // MARK: Actions
+    var updatePopupAction: ((AnyPopup) async -> ())! { get set }
+    var closePopupAction: ((AnyPopup) async -> ())! { get set }
 
-    // MARK: Methods to Override
-    func recalculateAndSave(height: CGFloat, for popup: AnyPopup) { fatalError() }
-    func calculateHeightForActivePopup() -> CGFloat? { fatalError() }
-    func calculatePopupPadding() -> EdgeInsets { fatalError() }
-    func calculateCornerRadius() -> [VerticalEdge: CGFloat] { fatalError() }
-    func calculateVerticalFixedSize(for popup: AnyPopup) -> Bool { fatalError() }
+    // MARK: Methods
+    func calculateActivePopupHeight() async -> CGFloat?
+    func calculateActivePopupOuterPadding() async -> EdgeInsets
+    func calculateActivePopupInnerPadding() async -> EdgeInsets
+    func calculateActivePopupCorners() async -> [PopupAlignment: CGFloat]
+    func calculateActivePopupVerticalFixedSize() async -> Bool
+    func calculateActivePopupTranslationProgress() async -> CGFloat
+    func calculatePopupHeight(_ heightCandidate: CGFloat, _ popup: AnyPopup) async -> CGFloat
+}
+
+
+
+// MARK: - INITIALIZE & SETUP
+
+
+
+// MARK: Initialize
+extension ViewModel {
+    init<Config: LocalConfig>(_ config: Config.Type) { self.init(); self.alignment = .init(Config.self) }
 }
 
 // MARK: Setup
 extension ViewModel {
-    func setup(updatePopupAction: @escaping (AnyPopup) -> (), closePopupAction: @escaping (AnyPopup) -> ()) {
+    func setup(updatePopupAction: @escaping (AnyPopup) async -> (), closePopupAction: @escaping (AnyPopup) async -> ()) {
         self.updatePopupAction = updatePopupAction
         self.closePopupAction = closePopupAction
     }
 }
 
-// MARK: Update
+
+
+// MARK: UPDATE
+
+
+
+// MARK: Popups
 extension ViewModel {
-    func updatePopupsValue(_ newPopups: [AnyPopup]) {
-        popups = newPopups.filter { $0.config is Config }
-        activePopupHeight = calculateHeightForActivePopup()
+    func updatePopups(_ newPopups: [AnyPopup]) async {
+        popups = await filteredPopups(newPopups)
+        await updateActivePopupProperties()
 
         withAnimation(.transition) { objectWillChange.send() }
     }
-    func updateScreenValue(_ newScreen: Screen) {
-        screen = newScreen
+}
+
+// MARK: Screen
+extension ViewModel {
+    func updateScreen(screenHeight: CGFloat? = nil, screenSafeArea: EdgeInsets? = nil, isKeyboardActive: Bool? = nil) async {
+        screen = await updatedScreenProperties(screenHeight, screenSafeArea, isKeyboardActive)
+        await updateActivePopupProperties()
 
         withAnimation(.transition) { objectWillChange.send() }
     }
-    func updateKeyboardValue(_ isActive: Bool) {
-        isKeyboardActive = isActive
+}
 
-        withAnimation(.transition) { objectWillChange.send() }
+// MARK: Gesture Translation
+extension ViewModel {
+    func updateGestureTranslation(_ newGestureTranslation: CGFloat) async {
+        await updateActivePopupPropertiesOnGestureTranslationChange(newGestureTranslation)
+
+        withAnimation(activePopupProperties.gestureTranslation == 0 ? .transition : nil) { objectWillChange.send() }
+    }
+}
+
+// MARK: Popup Height
+extension ViewModel {
+    func updatePopupHeight(_ heightCandidate: CGFloat, _ popup: AnyPopup) async {
+        guard activePopupProperties.gestureTranslation == 0 else { return }
+
+        let newHeight = await calculatePopupHeight(heightCandidate, popup)
+        if newHeight != popup.height {
+            await updatePopupAction(popup.updatedHeight(newHeight))
+        }
+    }
+}
+
+// MARK: Popup Drag Height
+extension ViewModel {
+    func updatePopupDragHeight(_ targetDragHeight: CGFloat, _ popup: AnyPopup) async {
+        await updatePopupAction(popup.updatedDragHeight(targetDragHeight))
     }
 }
 
 // MARK: Helpers
-extension ViewModel {
-    func updateHeight(_ newHeight: CGFloat, _ popup: AnyPopup) { if popup.height != newHeight {
-        updatePopupAction(popup.settingHeight(newHeight))
-    }}
-}
-extension ViewModel {
-    func getConfig(_ item: AnyPopup?) -> Config {
-        let config = item?.config as? Config
-        return config ?? .init()
+private extension ViewModel {
+    func filteredPopups(_ popups: [AnyPopup]) async -> [AnyPopup] {
+        popups.filter { $0.config.alignment == alignment }
     }
-    func getActivePopupConfig() -> Config {
-        getConfig(popups.last)
+    func updatedScreenProperties(_ screenHeight: CGFloat?, _ screenSafeArea: EdgeInsets?, _ isKeyboardActive: Bool?) async -> Screen { .init(
+        height: screenHeight ?? screen.height,
+        safeArea: screenSafeArea ?? screen.safeArea,
+        isKeyboardActive: isKeyboardActive ?? screen.isKeyboardActive
+    )}
+}
+private extension ViewModel {
+    func updateActivePopupProperties() async {
+        activePopupProperties.height = await calculateActivePopupHeight()
+        activePopupProperties.outerPadding = await calculateActivePopupOuterPadding()
+        activePopupProperties.innerPadding = await calculateActivePopupInnerPadding()
+        activePopupProperties.corners = await calculateActivePopupCorners()
+        activePopupProperties.verticalFixedSize = await calculateActivePopupVerticalFixedSize()
+    }
+    func updateActivePopupPropertiesOnGestureTranslationChange(_ newGestureTranslation: CGFloat) async {
+        activePopupProperties.gestureTranslation = newGestureTranslation
+        activePopupProperties.translationProgress = await calculateActivePopupTranslationProgress()
+        activePopupProperties.height = await calculateActivePopupHeight()
     }
 }
-
-
-
-// MARK: - TESTS
-#if DEBUG
-
-
-
-// MARK: Methods
-extension ViewModel {
-    func t_setup(updatePopupAction: @escaping (AnyPopup) -> (), closePopupAction: @escaping (AnyPopup) -> ()) { setup(updatePopupAction: updatePopupAction, closePopupAction: closePopupAction) }
-    func t_updatePopupsValue(_ newPopups: [AnyPopup]) { updatePopupsValue(newPopups) }
-    func t_updateScreenValue(_ newScreen: Screen) { updateScreenValue(newScreen) }
-    func t_updateKeyboardValue(_ isActive: Bool) { updateKeyboardValue(isActive) }
-    func t_updatePopup(_ popup: AnyPopup) { updatePopupAction(popup) }
-    func t_calculateAndUpdateActivePopupHeight() { activePopupHeight = calculateHeightForActivePopup() }
-}
-
-// MARK: Variables
-extension ViewModel {
-    var t_popups: [AnyPopup] { popups }
-    var t_activePopupHeight: CGFloat? { activePopupHeight }
-}
-#endif

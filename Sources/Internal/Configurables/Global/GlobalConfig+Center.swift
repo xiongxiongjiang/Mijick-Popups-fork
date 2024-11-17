@@ -1,5 +1,5 @@
 //
-//  GlobalConfig+Vertical.swift of MijickPopups
+//  GlobalConfig+Center.swift of MijickPopups
 //
 //  Created by Tomasz Kurylik. Sending ❤️ from Kraków!
 //    - Mail: tomasz.kurylik@mijick.com
@@ -11,21 +11,19 @@
 
 import SwiftUI
 
-public final class GlobalConfigVertical: GlobalConfig { required public init() {}
-    // MARK: Content
-    public var popupPadding: EdgeInsets = .init()
-    public var cornerRadius: CGFloat = 40
+public final class GlobalConfigCenter: GlobalConfig { required public init() {}
+    // MARK: Active Variables
+    public var popupPadding: EdgeInsets = .init(top: 0, leading: 16, bottom: 0, trailing: 16)
+    public var cornerRadius: CGFloat = 24
     public var backgroundColor: Color = .white
     public var overlayColor: Color = .black.opacity(0.5)
-    public var isStackingEnabled: Bool = true
-
-    // MARK: Gestures
     public var isTapOutsideToDismissEnabled: Bool = false
-    public var isDragGestureEnabled: Bool = true
-    public var dragThreshold: CGFloat = 1/3
 
-    // MARK: Non-Customizable
+    // MARK: Inactive Variables
     public var ignoredSafeAreaEdges: Edge.Set = []
     public var heightMode: HeightMode = .auto
     public var dragDetents: [DragDetent] = []
+    public var isDragGestureEnabled: Bool = false
+    public var dragThreshold: CGFloat = 0
+    public var isStackingEnabled: Bool = false
 }

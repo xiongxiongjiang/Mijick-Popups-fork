@@ -12,16 +12,16 @@
 import SwiftUI
 
 extension View {
-    func background(backgroundColor: Color, overlayColor: Color, corners: [VerticalEdge: CGFloat]) -> some View { background(
-        backgroundColor
+    func background(backgroundColor: Color, overlayColor: Color, corners: [PopupAlignment: CGFloat]) -> some View {
+        background(backgroundColor)
             .overlay(overlayColor)
             .mask(RoundedCorner(corners: corners))
-    )}
+    }
 }
 
 // MARK: Background Shape
 fileprivate struct RoundedCorner: Shape {
-    var corners: [VerticalEdge: CGFloat]
+    var corners: [PopupAlignment: CGFloat]
 
     
     var animatableData: CGFloat {

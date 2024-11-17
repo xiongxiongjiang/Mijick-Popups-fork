@@ -11,29 +11,29 @@
 
 import Foundation
 
-struct PopupID {
+struct PopupID: Sendable {
     let rawValue: String
 }
 
 // MARK: Create
 extension PopupID {
-    static func create(from id: String) -> Self {
+    init(_ id: String) async {
         let firstComponent = id,
-            secondComponent = separator,
+            secondComponent = Self.separator,
             thirdComponent = String(describing: Date())
-        return .init(rawValue: firstComponent + secondComponent + thirdComponent)
+        self.init(rawValue: firstComponent + secondComponent + thirdComponent)
     }
-    static func create(from popupType: any Popup.Type) -> Self {
-        create(from: .init(describing: popupType))
+    init(_ popupType: any Popup.Type) async {
+        await self.init(.init(describing: popupType))
     }
 }
 
 // MARK: Comparison
 extension PopupID {
+    func isSame(as popup: AnyPopup) -> Bool { rawValue == popup.id.rawValue }
     func isSameType(as id: String) -> Bool { getFirstComponent(of: self) == id }
     func isSameType(as popupType: any Popup.Type) -> Bool { getFirstComponent(of: self) == String(describing: popupType) }
     func isSameType(as popupID: PopupID) -> Bool { getFirstComponent(of: self) == getFirstComponent(of: popupID) }
-    func isSameInstance(as popup: AnyPopup) -> Bool { rawValue == popup.id.rawValue }
 }
 
 

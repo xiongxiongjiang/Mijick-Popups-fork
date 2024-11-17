@@ -11,8 +11,8 @@
 
 import SwiftUI
 
-struct PopupVerticalStackView<Config: LocalConfig.Vertical>: View {
-    @ObservedObject var viewModel: VM.VerticalStack<Config>
+struct PopupVerticalStackView: View {
+    @ObservedObject var viewModel: VM.VerticalStack
 
 
     var body: some View {
@@ -27,22 +27,22 @@ private extension PopupVerticalStackView {
     }
 }
 private extension PopupVerticalStackView {
-    func createPopup(_ popup: AnyPopup) -> some View {
+    @ViewBuilder func createPopup(_ popup: AnyPopup) -> some View { if viewModel.isPopupActive(popup) {
         popup.body
-            .padding(viewModel.calculateBodyPadding(for: popup))
-            .fixedSize(horizontal: false, vertical: viewModel.calculateVerticalFixedSize(for: popup))
-            .onHeightChange { viewModel.recalculateAndSave(height: $0, for: popup) }
-            .frame(height: viewModel.activePopupHeight, alignment: (!viewModel.alignment).toAlignment())
-            .frame(maxWidth: .infinity, maxHeight: viewModel.activePopupHeight, alignment: (!viewModel.alignment).toAlignment())
-            .background(backgroundColor: getBackgroundColor(for: popup), overlayColor: getStackOverlayColor(for: popup), corners: viewModel.calculateCornerRadius())
+            .compositingGroup()
+            .padding(viewModel.activePopupProperties.innerPadding)
+            .fixedSize(horizontal: false, vertical: viewModel.activePopupProperties.verticalFixedSize)
+            .onHeightChange { await viewModel.updatePopupHeight($0, popup) }
+            .frame(height: viewModel.activePopupProperties.height, alignment: (!viewModel.alignment).toAlignment())
+            .frame(maxWidth: .infinity, maxHeight: viewModel.activePopupProperties.height, alignment: (!viewModel.alignment).toAlignment())
+            .background(backgroundColor: getBackgroundColor(for: popup), overlayColor: getStackOverlayColor(for: popup), corners: viewModel.activePopupProperties.corners)
             .offset(y: viewModel.calculateOffsetY(for: popup))
             .scaleEffect(x: viewModel.calculateScaleX(for: popup))
             .focusSection_tvOS()
-            .padding(viewModel.calculatePopupPadding())
+            .padding(viewModel.activePopupProperties.outerPadding)
             .transition(transition)
             .zIndex(viewModel.calculateZIndex())
-            .compositingGroup()
-    }
+    }}
 }
 
 private extension PopupVerticalStackView {

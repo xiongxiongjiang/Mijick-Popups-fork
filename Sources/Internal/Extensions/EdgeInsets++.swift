@@ -12,8 +12,9 @@
 import SwiftUI
 
 extension EdgeInsets {
-    subscript(_ edge: VerticalEdge) -> CGFloat { switch edge {
+    subscript(_ edge: PopupAlignment) -> CGFloat { switch edge {
         case .top: top
+        case .center: 0
         case .bottom: bottom
     }}
 }

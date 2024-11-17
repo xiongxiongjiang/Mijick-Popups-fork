@@ -11,17 +11,8 @@
 
 import SwiftUI
 
-struct Screen {
-    let height: CGFloat
-    let safeArea: EdgeInsets
-
-
-    init(height: CGFloat = .zero, safeArea: EdgeInsets = .init()) {
-        self.height = height
-        self.safeArea = safeArea
-    }
-    init(_ reader: GeometryProxy) {
-        self.height = reader.size.height + reader.safeAreaInsets.top + reader.safeAreaInsets.bottom
-        self.safeArea = reader.safeAreaInsets
-    }
+struct Screen: Sendable {
+    var height: CGFloat = .zero
+    var safeArea: EdgeInsets = .init()
+    var isKeyboardActive: Bool = false
 }

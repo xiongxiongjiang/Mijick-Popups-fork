@@ -11,16 +11,16 @@
 
 public extension GlobalConfigContainer {
     /**
-     Default configuration for all centre popups.
+     Default configuration for all center popups.
      Use the ``Popup/configurePopup(config:)-98ha0`` method to change the configuration for a specific popup.
      See the list of available methods in ``GlobalConfig``.
      */
-    func centre(_ builder: (GlobalConfig.Centre) -> GlobalConfig.Centre) -> Self { Self.centre = builder(.init()); return self }
+    nonisolated func center(_ builder: (GlobalConfigCenter) -> GlobalConfigCenter) -> Self { Self.center = builder(.init()); return self }
 
     /**
      Default configuration for all top and bottom popups.
      Use the ``Popup/configurePopup(config:)-98ha0`` method to change the configuration for a specific popup.
      See the list of available methods in ``GlobalConfig`` and ``GlobalConfig/Vertical``.
      */
-    func vertical(_ builder: (GlobalConfig.Vertical) -> GlobalConfig.Vertical) -> Self { Self.vertical = builder(.init()); return self }
+    nonisolated func vertical(_ builder: (GlobalConfigVertical) -> GlobalConfigVertical) -> Self { Self.vertical = builder(.init()); return self }
 }

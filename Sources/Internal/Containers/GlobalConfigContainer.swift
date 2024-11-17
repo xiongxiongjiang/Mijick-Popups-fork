@@ -9,7 +9,7 @@
 //  Copyright ©2023 Mijick. All rights reserved.
 
 
-public class GlobalConfigContainer {
-    nonisolated(unsafe) static var centre: GlobalConfig.Centre = .init()
-    nonisolated(unsafe) static var vertical: GlobalConfig.Vertical = .init()
+public actor GlobalConfigContainer {
+    nonisolated(unsafe) static var center: GlobalConfigCenter = .init()
+    nonisolated(unsafe) static var vertical: GlobalConfigVertical = .init()
 }

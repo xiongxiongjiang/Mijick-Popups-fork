@@ -1,5 +1,5 @@
 //
-//  Public+Dismiss+View.swift of MijickPopups
+//  Public+Dismiss+PopupStack.swift of MijickPopups
 //
 //  Created by Tomasz Kurylik. Sending ❤️ from Kraków!
 //    - Mail: tomasz.kurylik@mijick.com
@@ -9,9 +9,9 @@
 //  Copyright ©2024 Mijick. All rights reserved.
 
 
-import SwiftUI
+import Foundation
 
-public extension View {
+public extension PopupStack {
     /**
      Dismisses the currently active popup.
 
@@ -20,7 +20,7 @@ public extension View {
 
      - Important: Make sure you use the correct **popupStackID** from which you want to remove the popup.
      */
-    @MainActor func dismissLastPopup(popupStackID: PopupStackID = .shared) async { await PopupStack.dismissLastPopup(popupStackID: popupStackID) }
+    @MainActor static func dismissLastPopup(popupStackID: PopupStackID = .shared) async { await fetch(id: popupStackID)?.modify(.removeLastPopup) }
 
     /**
      Dismisses all popups with the specified identifier.
@@ -31,7 +31,7 @@ public extension View {
 
      - Important: Make sure you use the correct **popupStackID** from which you want to remove the popup.
      */
-    @MainActor func dismissPopup(_ id: String, popupStackID: PopupStackID = .shared) async { await PopupStack.dismissPopup(id, popupStackID: popupStackID) }
+    @MainActor static func dismissPopup(_ id: String, popupStackID: PopupStackID = .shared) async { await fetch(id: popupStackID)?.modify(.removeAllPopupsWithID(id)) }
 
     /**
      Dismisses all popups of the provided type.
@@ -40,10 +40,10 @@ public extension View {
         - type: Type of the popup located on the stack.
         - popupStackID: The identifier for which the popup was presented. For more information, see ``Popup/present(popupStackID:)``.
 
-     - Important: If a custom ID (see ``Popup/setCustomID(_:)`` method for reference) is set for the popup, use the ``SwiftUICore/View/dismissPopup(_:popupStackID:)-55ubm`` method instead.
+     - Important: If a custom ID (``Popup/setCustomID(_:)``) is set for the popup, use the ``dismissPopup(_:popupStackID:)-1atvy`` method instead.
      - Important: Make sure you use the correct **popupStackID** from which you want to remove the popup.
      */
-    @MainActor func dismissPopup<P: Popup>(_ type: P.Type, popupStackID: PopupStackID = .shared) async { await PopupStack.dismissPopup(type, popupStackID: popupStackID) }
+    @MainActor static func dismissPopup<P: Popup>(_ type: P.Type, popupStackID: PopupStackID = .shared) async { await fetch(id: popupStackID)?.modify(.removeAllPopupsOfType(type)) }
 
     /**
      Dismisses all the popups.
@@ -53,5 +53,5 @@ public extension View {
 
      - Important: Make sure you use the correct **popupStackID** from which you want to remove the popups.
      */
-    @MainActor func dismissAllPopups(popupStackID: PopupStackID = .shared) async { await PopupStack.dismissAllPopups(popupStackID: popupStackID) }
+    @MainActor static func dismissAllPopups(popupStackID: PopupStackID = .shared) async { await fetch(id: popupStackID)?.modify(.removeAllPopups) }
 }
