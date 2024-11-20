@@ -195,12 +195,11 @@ private extension VM.VerticalStack {
 private extension VM.VerticalStack {
     func calculateLargeScreenHeight() -> CGFloat {
         let fullscreenHeight = getFullscreenHeight(),
-            safeAreaHeight = screen.safeArea[!alignment],
             stackHeight = calculateStackHeight()
-        return fullscreenHeight - safeAreaHeight - stackHeight
+        return fullscreenHeight - stackHeight
     }
     func getFullscreenHeight() -> CGFloat {
-        screen.height
+        UIScreen.main.bounds.height
     }
 }
 private extension VM.VerticalStack {
